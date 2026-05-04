@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:camera/camera.dart';
+import 'package:path_provider/path_provider.dart';
 import '../services/image_service.dart';
 import '../services/api_service.dart';
 import '../services/tts_service.dart';
@@ -13,7 +14,7 @@ class CameraPage extends StatefulWidget {
   State<CameraPage> createState() => _CameraPageState();
 }
 
-class _CameraPageState extends State<CameraPage> {
+class _CameraPageState extends State<CameraPage> with WidgetsBindingObserver {
   final ImageService _imageService = ImageService();
   final ApiService _apiService = ApiService();
   final TtsService _ttsService = TtsService();
@@ -25,11 +26,25 @@ class _CameraPageState extends State<CameraPage> {
   bool _showResult = false;
   ScenicSpot? _recognizedSpot;
   String _errorMessage = '';
+  bool _isFlashOn = false;
 
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
+    _ttsService.init();
     _initCamera();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (_controller == null || !_controller!.value.isInitialized) return;
+
+    if (state == AppLifecycleState.inactive) {
+      _controller?.dispose();
+    } else if (state == AppLifecycleState.resumed) {
+      _initCamera();
+    }
   }
 
   Future<void> _initCamera() async {
@@ -40,17 +55,49 @@ class _CameraPageState extends State<CameraPage> {
         return;
       }
 
+      final camera = _cameras.firstWhere(
+        (cam) => cam.lensDirection == CameraLensDirection.back,
+        orElse: () => _cameras.first,
+      );
+
       _controller = CameraController(
-        _cameras.first,
+        camera,
         ResolutionPreset.high,
         enableAudio: false,
+        androidSettings: AndroidCameraSettings(
+          flashMode: _isFlashOn ? FlashMode.torch : FlashMode.off,
+        ),
       );
 
       await _controller!.initialize();
       if (mounted) setState(() => _isInitialized = true);
     } catch (e) {
-      setState(() => _errorMessage = '摄像头初始化失败: $e');
+      setState(() => _errorMessage = '摄像头初始化失败');
     }
+  }
+
+  Future<void> _toggleFlash() async {
+    if (_controller == null) return;
+    setState(() => _isFlashOn = !_isFlashOn);
+    await _controller!.setFlashMode(_isFlashOn ? FlashMode.torch : FlashMode.off);
+  }
+
+  Future<void> _switchCamera() async {
+    if (_cameras.length < 2) return;
+
+    final currentDirection = _controller?.description.lensDirection;
+    final newCamera = _cameras.firstWhere(
+      (cam) => cam.lensDirection != currentDirection,
+      orElse: () => _cameras.first,
+    );
+
+    await _controller?.dispose();
+    _controller = CameraController(
+      newCamera,
+      ResolutionPreset.high,
+      enableAudio: false,
+    );
+    await _initCamera();
   }
 
   Future<void> _takePhoto() async {
@@ -62,10 +109,13 @@ class _CameraPageState extends State<CameraPage> {
       _isRecognizing = true;
       _showResult = false;
       _recognizedSpot = null;
+      _errorMessage = '';
     });
 
     try {
       final XFile photo = await _controller!.takePicture();
+      final directory = await getTemporaryDirectory();
+      final filePath = '${directory.path}/${DateTime.now().millisecondsSinceEpoch}.jpg';
       final file = File(photo.path);
 
       final spots = await _apiService.getNearbySpots(0, 0);
@@ -99,6 +149,7 @@ class _CameraPageState extends State<CameraPage> {
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _controller?.dispose();
     _ttsService.dispose();
     super.dispose();
@@ -153,7 +204,12 @@ class _CameraPageState extends State<CameraPage> {
       left: 0,
       right: 0,
       child: Container(
-        padding: EdgeInsets.only(top: MediaQuery.of(context).padding.top + 16, left: 16, right: 16, bottom: 16),
+        padding: EdgeInsets.only(
+          top: MediaQuery.of(context).padding.top + 16,
+          left: 16,
+          right: 16,
+          bottom: 16,
+        ),
         decoration: BoxDecoration(
           gradient: LinearGradient(
             begin: Alignment.topCenter,
@@ -174,7 +230,13 @@ class _CameraPageState extends State<CameraPage> {
                 textAlign: TextAlign.center,
               ),
             ),
-            const SizedBox(width: 48),
+            IconButton(
+              onPressed: _toggleFlash,
+              icon: Icon(
+                _isFlashOn ? Icons.flash_on : Icons.flash_off,
+                color: _isFlashOn ? Colors.yellow : Colors.white,
+              ),
+            ),
           ],
         ),
       ),
@@ -187,7 +249,10 @@ class _CameraPageState extends State<CameraPage> {
       left: 0,
       right: 0,
       child: Container(
-        padding: EdgeInsets.only(bottom: MediaQuery.of(context).padding.bottom + 32, top: 32),
+        padding: EdgeInsets.only(
+          bottom: MediaQuery.of(context).padding.bottom + 32,
+          top: 32,
+        ),
         decoration: BoxDecoration(
           gradient: LinearGradient(
             begin: Alignment.bottomCenter,
@@ -196,8 +261,12 @@ class _CameraPageState extends State<CameraPage> {
           ),
         ),
         child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
+          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
           children: [
+            IconButton(
+              onPressed: _switchCamera,
+              icon: const Icon(Icons.flip_camera_ios, color: Colors.white, size: 32),
+            ),
             GestureDetector(
               onTap: _takePhoto,
               child: Container(
@@ -215,6 +284,10 @@ class _CameraPageState extends State<CameraPage> {
                   ),
                 ),
               ),
+            ),
+            IconButton(
+              onPressed: () {},
+              icon: const Icon(Icons.photo_library, color: Colors.white, size: 32),
             ),
           ],
         ),
@@ -248,7 +321,7 @@ class _CameraPageState extends State<CameraPage> {
       right: 0,
       child: Container(
         padding: EdgeInsets.only(
-          bottom: MediaQuery.of(context).padding.bottom + 120,
+          bottom: MediaQuery.of(context).padding.bottom + 160,
           top: 24,
           left: 24,
           right: 24,

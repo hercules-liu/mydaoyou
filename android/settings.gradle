@@ -1,0 +1,7 @@
+plugins:
+  - flutter_plugin_android_lifecycle
+  - location
+  - camera
+
+flutter:
+  uses-material-design: true

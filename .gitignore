@@ -1,0 +1,14 @@
+*.iml
+.gradle/
+build/
+local.properties
+*.lock
+package-lock.json
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+.packages
+.pub/
+.idea/
+*.g.dart
+ios/Flutter/flutter_export_environment.sh

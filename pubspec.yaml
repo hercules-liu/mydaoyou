@@ -1,0 +1,29 @@
+name: youban
+description: 游伴 - 智能语音导游APP
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: '>=3.0.0 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+  cupertino_icons: ^1.0.6
+  geolocator: ^11.0.0
+  amap_flutter_location: ^3.0.0
+  speech_to_text: ^6.6.0
+  flutter_tts: ^3.8.5
+  camera: ^0.10.5+9
+  http: ^1.2.0
+  path_provider: ^2.1.2
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^3.0.0
+
+flutter:
+  uses-material-design: true
+  assets:
+    - assets/images/
