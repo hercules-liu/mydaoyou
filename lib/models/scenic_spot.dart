@@ -8,6 +8,7 @@ class ScenicSpot {
   final double radius;
   final List<String> tags;
   final Map<String, String> audioFiles;
+  final int suggestedDuration;
 
   const ScenicSpot({
     required this.id,
@@ -19,6 +20,7 @@ class ScenicSpot {
     required this.radius,
     this.tags = const [],
     this.audioFiles = const {},
+    this.suggestedDuration = 3600,
   });
 
   factory ScenicSpot.fromJson(Map<String, dynamic> json) {
@@ -32,6 +34,7 @@ class ScenicSpot {
       radius: (json['radius'] as num?)?.toDouble() ?? 100.0,
       tags: (json['tags'] as List<dynamic>?)?.cast<String>() ?? [],
       audioFiles: (json['audio_files'] as Map<String, dynamic>?)?.cast<String, String>() ?? {},
+      suggestedDuration: (json['suggested_duration'] as int?) ?? 3600,
     );
   }
 
@@ -46,6 +49,7 @@ class ScenicSpot {
       'radius': radius,
       'tags': tags,
       'audio_files': audioFiles,
+      'suggested_duration': suggestedDuration,
     };
   }
 

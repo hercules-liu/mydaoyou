@@ -2,6 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'pages/home_page.dart';
 import 'pages/camera_page.dart';
+import 'pages/chat_page.dart';
+import 'pages/friends_page.dart';
+import 'pages/comments_page.dart';
+import 'pages/route_page.dart';
 import 'pages/footprint_page.dart';
 
 void main() {
@@ -31,6 +35,10 @@ class YouBanApp extends StatelessWidget {
       home: const HomePage(),
       routes: {
         '/camera': (context) => const CameraPage(),
+        '/chat': (context) => const ChatPage(),
+        '/friends': (context) => const FriendsPage(),
+        '/comments': (context) => const CommentsPage(),
+        '/route': (context) => const RoutePage(),
         '/footprint': (context) => const FootprintPage(),
       },
     );

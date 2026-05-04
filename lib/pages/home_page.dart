@@ -5,6 +5,11 @@ import '../services/tts_service.dart';
 import 'package:flutter_tts/flutter_tts.dart';
 import '../services/stt_service.dart';
 import '../models/scenic_spot.dart';
+import 'friends_page.dart';
+import 'comments_page.dart';
+import 'route_page.dart';
+import 'footprint_page.dart';
+import 'chat_page.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -19,6 +24,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
   final TtsService _ttsService = TtsService();
   final SttService _sttService = SttService();
 
+  int _currentIndex = 0;
   late AnimationController _animationController;
   late Animation<double> _pulseAnimation;
 
@@ -150,12 +156,92 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
             children: [
               _buildHeader(),
               Expanded(child: _buildContent()),
-              _buildVoiceButton(),
+              if (_currentIndex == 0) _buildVoiceButton(),
+              _buildBottomNav(),
             ],
           ),
         ),
       ),
     );
+  }
+
+  Widget _buildBottomNav() {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.1),
+            blurRadius: 10,
+            offset: const Offset(0, -2),
+          ),
+        ],
+      ),
+      child: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 8),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            children: [
+              _buildNavItem(Icons.home, '首页', 0),
+              _buildNavItem(Icons.route, '路线', 1),
+              _buildNavItem(Icons.people, '同伴', 2),
+              _buildNavItem(Icons.star, '点评', 3),
+              _buildNavItem(Icons.person, '足迹', 4),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildNavItem(IconData icon, String label, int index) {
+    final isSelected = _currentIndex == index;
+    return InkWell(
+      onTap: () {
+        setState(() => _currentIndex = index);
+        _navigateToPage(index);
+      },
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              icon,
+              color: isSelected ? Theme.of(context).primaryColor : Colors.grey,
+            ),
+            const SizedBox(height: 4),
+            Text(
+              label,
+              style: TextStyle(
+                color: isSelected ? Theme.of(context).primaryColor : Colors.grey,
+                fontSize: 12,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _navigateToPage(int index) {
+    switch (index) {
+      case 0:
+        break;
+      case 1:
+        Navigator.push(context, MaterialPageRoute(builder: (_) => const RoutePage()));
+        break;
+      case 2:
+        Navigator.push(context, MaterialPageRoute(builder: (_) => const FriendsPage()));
+        break;
+      case 3:
+        Navigator.push(context, MaterialPageRoute(builder: (_) => CommentsPage(spot: _currentSpot)));
+        break;
+      case 4:
+        Navigator.push(context, MaterialPageRoute(builder: (_) => const FootprintPage()));
+        break;
+    }
   }
 
   Widget _buildHeader() {
